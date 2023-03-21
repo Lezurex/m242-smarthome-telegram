@@ -15,7 +15,10 @@ public class Mqtt implements MqttCallback {
     private final String clientId;
     private final String username;
     private final String password;
-    private final int qos = 2;
+
+    private static final int QOS = 2;
+
+    private MemoryPersistence persistence;
 
     public Mqtt(String broker, String clientId) {
         this(broker, clientId, null, null);
@@ -40,9 +43,9 @@ public class Mqtt implements MqttCallback {
 
     public void sendMessage(String topic, String content) throws MqttException {
         MqttMessage message = new MqttMessage(content.getBytes());
-        message.setQos(qos);
+        message.setQos(QOS);
         client.publish(topic, message);
-        logger.info(topic + " = " + message);
+        logger.info(() -> String.format("%s = %s", topic, message.toString()));
     }
 
     public void subscribe(String topic) throws MqttException {
@@ -54,32 +57,30 @@ public class Mqtt implements MqttCallback {
     }
 
     public void start() throws MqttException {
-        MemoryPersistence persistence = new MemoryPersistence();
+        persistence = new MemoryPersistence();
         client = new MqttClient(broker, clientId, persistence);
         client.setCallback(this);
         MqttConnectOptions connOpts = new MqttConnectOptions();
-        if(username != null) {
+        if (username != null) {
             connOpts.setUserName(username);
             connOpts.setPassword(password.toCharArray());
         }
         connOpts.setCleanSession(true);
-        logger.info("Connecting to broker: "+broker);
+        logger.info(() -> String.format("Connecting to broker: %s", broker));
         client.connect(connOpts);
         logger.info("Connected");
         isRunning = true;
-        controlThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    while(isRunning) {
-                        if(!client.isConnected()) {
-                            client.reconnect();
-                        }
-                        Thread.sleep(1000l);
+        controlThread = new Thread(() -> {
+            try {
+                while (isRunning) {
+                    if (!client.isConnected()) {
+                        client.reconnect();
                     }
-                }catch(InterruptedException | MqttException e) {
-                    logger.log(Level.SEVERE, "", e);
+                    Thread.sleep(1000l);
                 }
+            } catch (InterruptedException | MqttException e) {
+                logger.log(Level.SEVERE, "", e);
+                Thread.currentThread().interrupt();
             }
         });
         controlThread.start();
@@ -89,6 +90,7 @@ public class Mqtt implements MqttCallback {
     public void stop() throws MqttException {
         isRunning = false;
         client.disconnect();
+        persistence.close();
         logger.info("Disconnected");
     }
 
@@ -100,15 +102,15 @@ public class Mqtt implements MqttCallback {
 
     @Override
     public void messageArrived(String topic, MqttMessage message) throws Exception {
-        logger.log(Level.FINE, "Receveid: " + topic + " " + message.toString());
-        for(BiConsumer<String, MqttMessage> consumer: consumers) {
+        logger.fine(() -> String.format("Receveid: %s %s", topic, message.toString()));
+        for (BiConsumer<String, MqttMessage> consumer : consumers) {
             consumer.accept(topic, message);
         }
     }
 
     @Override
     public void deliveryComplete(IMqttDeliveryToken token) {
-
+        throw new UnsupportedOperationException();
     }
 
     public void publish(String topic, String message) throws MqttException {

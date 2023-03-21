@@ -38,6 +38,7 @@ public class Main {
 
         TelegramNotificationBot tnb =
                 new TelegramNotificationBot(config.getProperty("telegram-apikey"));
+        tnb.toString();
 
         logger.info("TelegramBot started");
 
@@ -51,10 +52,7 @@ public class Main {
         }
 
         mqttClient.addHandler((s, mqttMessage) -> {
-            if (s.equals("alp/m5core2/temp")) {
-            }
-            if (s.equals("alp/m5core2/hum")) {
-            }
+
         });
     }
 }

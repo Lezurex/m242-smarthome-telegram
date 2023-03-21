@@ -2,8 +2,8 @@ plugins {
     id 'java'
 }
 
-group 'ch.alptbz.mqtttelegramdemo'
-version '1.0-SNAPSHOT'
+group 'com.lezurex.smarthome.telegram'
+version '1.0'
 
 repositories {
     mavenCentral()

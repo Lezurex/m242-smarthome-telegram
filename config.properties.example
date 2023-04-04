@@ -1,2 +1,3 @@
 telegram-apikey = YOURAPIKEY
 mqtt-url = tcp://HOST:1883
+mqtt-root-topic = smarthome

@@ -45,8 +45,7 @@ public class Main {
         Mqtt mqttClient = new Mqtt(config.getProperty("mqtt-url"), "smarthome");
         try {
             mqttClient.start();
-            mqttClient.subscribe("alp/m5core2/#");
-            mqttClient.publish("M5Stack", "test");
+            mqttClient.subscribe(String.format("%s/#", config.getProperty("mqtt-root-topic")));
         } catch (MqttException e) {
             e.printStackTrace();
         }

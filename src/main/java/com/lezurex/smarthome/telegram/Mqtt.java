@@ -110,7 +110,7 @@ public class Mqtt implements MqttCallback {
 
     @Override
     public void deliveryComplete(IMqttDeliveryToken token) {
-        throw new UnsupportedOperationException();
+        logger.info(() -> String.format("Delivery %s is complete.", token.getMessageId()));
     }
 
     public void publish(String topic, String message) throws MqttException {

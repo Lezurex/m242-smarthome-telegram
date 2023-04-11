@@ -36,12 +36,6 @@ public class Main {
 
         logger.info("Config file loaded");
 
-        TelegramNotificationBot tnb =
-                new TelegramNotificationBot(config.getProperty("telegram-apikey"));
-        tnb.toString();
-
-        logger.info("TelegramBot started");
-
         Mqtt mqttClient = new Mqtt(config.getProperty("mqtt-url"), "smarthome");
         try {
             mqttClient.start();
@@ -50,8 +44,7 @@ public class Main {
             e.printStackTrace();
         }
 
-        mqttClient.addHandler((s, mqttMessage) -> {
-
-        });
+        new TelegramNotificationBot(config.getProperty("telegram-apikey"), mqttClient);
+        logger.info("TelegramBot started");
     }
 }

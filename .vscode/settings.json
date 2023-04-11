@@ -1,4 +1,4 @@
 {
-  "conventionalCommits.scopes": ["MQTT"],
+  "conventionalCommits.scopes": ["MQTT", "Telegram"],
   "java.configuration.updateBuildConfiguration": "automatic"
 }

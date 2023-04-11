@@ -24,7 +24,7 @@ public class Main {
         return false;
     }
 
-    public final static void main(String[] args) throws InterruptedException {
+    public static final void main(String[] args) {
         ConsoleHandler ch = new ConsoleHandler();
         ch.setLevel(Level.ALL);
         Logger.getGlobal().addHandler(ch);

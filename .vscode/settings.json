@@ -1,3 +1,4 @@
 {
-  "conventionalCommits.scopes": ["MQTT"]
+  "conventionalCommits.scopes": ["MQTT"],
+  "java.configuration.updateBuildConfiguration": "automatic"
 }

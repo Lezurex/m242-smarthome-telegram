@@ -6,6 +6,7 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import java.util.List;
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.silentsoft.csscolor4j.Color;
 
 public class TelegramNotificationBot implements UpdatesListener {
 
@@ -46,7 +47,14 @@ public class TelegramNotificationBot implements UpdatesListener {
                 setValue(room, Property.BRIGHTNESS, parts[2]);
                 break;
             case COLOR:
-                setValue(room, Property.COLOR, parts[2]);
+                try {
+                    var color = Color.valueOf(parts[2]);
+                    setValue(room, Property.COLOR, toRGB(color));
+                    replyMessage(update, "Color set to " + color.getHex() + "!");
+                } catch (IllegalArgumentException e) {
+                    replyMessage(update, "Please use a valid color!");
+                    return;
+                }
                 break;
             default:
                 replyMessage(update, "Not a valid property! Use mode, brightness or color!");
@@ -61,6 +69,7 @@ public class TelegramNotificationBot implements UpdatesListener {
             Room.asList().forEach(r -> setValue(r, Property.MODE, "off"));
             setValue(Room.HALLWAY, Property.MODE, "on");
             setValue(Room.HALLWAY, Property.BRIGHTNESS, "10");
+            setValue(Room.HALLWAY, Property.COLOR, toRGB(Color.valueOf("white")));
             replyMessage(update, "Good night!");
         } else if (message.contains("leaving")) {
             Room.asList().forEach(r -> setValue(r, Property.MODE, "off"));
@@ -72,6 +81,10 @@ public class TelegramNotificationBot implements UpdatesListener {
             });
             replyMessage(update, "Let's party!");
         }
+    }
+
+    private String toRGB(Color color) {
+        return String.format("%s,%s,%s", color.getRed(), color.getGreen(), color.getBlue());
     }
 
     private void setValue(Room room, Property property, String value) {

@@ -46,7 +46,7 @@ public class TelegramNotificationBot implements UpdatesListener {
                 setValue(room, Property.BRIGHTNESS, parts[2]);
                 break;
             case COLOR:
-                setValue(room, Property.MODE, parts[2]);
+                setValue(room, Property.COLOR, parts[2]);
                 break;
             default:
                 replyMessage(update, "Not a valid property! Use mode, brightness or color!");
@@ -76,7 +76,8 @@ public class TelegramNotificationBot implements UpdatesListener {
 
     private void setValue(Room room, Property property, String value) {
         try {
-            mqttClient.sendMessage(String.format("smarthome/%s/%s", room.getId(), property.getId()), value);
+            mqttClient.sendMessage(String.format("smarthome/%s/%s", room.getId(), property.getId()),
+                    value);
         } catch (MqttException e) {
             e.printStackTrace();
         }
@@ -90,7 +91,7 @@ public class TelegramNotificationBot implements UpdatesListener {
     @Override
     public int process(List<Update> updates) {
         updates.stream().filter(u -> u.message() != null).forEach((update -> {
-            var room = Room.fromId(update.message().text().substring(1));
+            var room = Room.fromId(update.message().text().substring(1).split("\\s+")[0]);
             if (room != null) {
                 handleRoom(room, update);
             } else {

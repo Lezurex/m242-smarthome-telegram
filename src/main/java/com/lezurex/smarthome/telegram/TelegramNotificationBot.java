@@ -9,10 +9,6 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 
 public class TelegramNotificationBot implements UpdatesListener {
 
-    private static final List<String> rooms =
-            List.of("livingroom", "kitchen", "bedroom", "hallway", "wardrobe");
-    private static final List<String> modes = List.of("off", "on", "flashing", "party");
-
     private final TelegramBot bot;
     private final Mqtt mqttClient;
 
@@ -23,21 +19,22 @@ public class TelegramNotificationBot implements UpdatesListener {
         bot.setUpdatesListener(this);
     }
 
-    private void handleRoom(String room, Update update) {
+    private void handleRoom(Room room, Update update) {
         var parts = update.message().text().split("\\s+");
         if (parts.length != 3) {
             replyMessage(update, "Invalid command!");
             return;
         }
-        switch (parts[1].toLowerCase()) {
-            case "mode":
-                if (!modes.contains(parts[2].toLowerCase())) {
+        var property = Property.fromId(parts[1].toLowerCase());
+        switch (property) {
+            case MODE:
+                if (Mode.isValid(parts[2].toLowerCase())) {
                     replyMessage(update, "Please use a supported mode!");
                     return;
                 }
-                setValue(room, "mode", parts[2].toLowerCase());
+                setValue(room, Property.MODE, parts[2].toLowerCase());
                 break;
-            case "brightness":
+            case BRIGHTNESS:
                 try {
                     var brightness = Integer.parseInt(parts[2]);
                     if (brightness > 100 || brightness < 0)
@@ -46,10 +43,10 @@ public class TelegramNotificationBot implements UpdatesListener {
                     replyMessage(update, "Please use a whole number between 0 and 100.");
                     return;
                 }
-                setValue(room, "brightness", parts[2]);
+                setValue(room, Property.BRIGHTNESS, parts[2]);
                 break;
-            case "color":
-                setValue(room, "mode", parts[2]);
+            case COLOR:
+                setValue(room, Property.MODE, parts[2]);
                 break;
             default:
                 replyMessage(update, "Not a valid property! Use mode, brightness or color!");
@@ -58,9 +55,28 @@ public class TelegramNotificationBot implements UpdatesListener {
         replyMessage(update, "Update sent successfully!");
     }
 
-    private void setValue(String room, String key, String value) {
+    private void handleMagicWords(Update update) {
+        var message = update.message().text().toLowerCase();
+        if (message.contains("sleep")) {
+            Room.asList().forEach(r -> setValue(r, Property.MODE, "off"));
+            setValue(Room.HALLWAY, Property.MODE, "on");
+            setValue(Room.HALLWAY, Property.BRIGHTNESS, "10");
+            replyMessage(update, "Good night!");
+        } else if (message.contains("leaving")) {
+            Room.asList().forEach(r -> setValue(r, Property.MODE, "off"));
+            replyMessage(update, "Goodbye!");
+        } else if (message.contains("party")) {
+            Room.asList().forEach(r -> {
+                setValue(r, Property.MODE, Mode.FLASHING.getId());
+                setValue(r, Property.BRIGHTNESS, "100");
+            });
+            replyMessage(update, "Let's party!");
+        }
+    }
+
+    private void setValue(Room room, Property property, String value) {
         try {
-            mqttClient.sendMessage(String.format("smarthome/%s/%s", room, key), value);
+            mqttClient.sendMessage(String.format("smarthome/%s/%s", room.getId(), property.getId()), value);
         } catch (MqttException e) {
             e.printStackTrace();
         }
@@ -74,11 +90,11 @@ public class TelegramNotificationBot implements UpdatesListener {
     @Override
     public int process(List<Update> updates) {
         updates.stream().filter(u -> u.message() != null).forEach((update -> {
-            var room = rooms.stream()
-                    .filter(r -> update.message().text().startsWith(String.format("/%s", r)))
-                    .findFirst();
-            if (room.isPresent()) {
-                handleRoom(room.get(), update);
+            var room = Room.fromId(update.message().text().substring(1));
+            if (room != null) {
+                handleRoom(room, update);
+            } else {
+                handleMagicWords(update);
             }
         }));
 

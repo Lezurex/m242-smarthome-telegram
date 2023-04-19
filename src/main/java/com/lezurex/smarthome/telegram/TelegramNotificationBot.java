@@ -76,7 +76,7 @@ public class TelegramNotificationBot implements UpdatesListener {
             replyMessage(update, "Goodbye!");
         } else if (message.contains("party")) {
             Room.asList().forEach(r -> {
-                setValue(r, Property.MODE, Mode.FLASHING.getId());
+                setValue(r, Property.MODE, Mode.PARTY.getId());
                 setValue(r, Property.BRIGHTNESS, "100");
             });
             replyMessage(update, "Let's party!");

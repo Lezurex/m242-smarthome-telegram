@@ -27,6 +27,10 @@ public class TelegramNotificationBot implements UpdatesListener {
             return;
         }
         var property = Property.fromId(parts[1].toLowerCase());
+        if (property == null) {
+            replyMessage(update, "Not a valid property! Use mode, brightness or color!");
+            return;
+        }
         switch (property) {
             case MODE:
                 if (Mode.isValid(parts[2].toLowerCase())) {
